@@ -1,9 +1,11 @@
-import { ButtonInteraction, ButtonStyle, CommandInteraction, InteractionReplyOptions } from "discord.js";
+import { ButtonInteraction, CommandInteraction, InteractionReplyOptions, InteractionResponse, Message } from "discord.js";
 import { NSActionRowBuilder } from "../helper/ActionRowBuilder";
+import { pString } from "../pts/utils/pString";
 
 interface _IData {
     option: TType;
     interaction: CommandInteraction;
+    message?: InteractionResponse
 }
 
 const _types = ['odd', 'storm', 'even'] as const;
@@ -15,11 +17,16 @@ const _options: Record<TType, string> = {
     even: "Chẵn"
 }
 
-const _row = _types.map( (_type, _index) => ({
+const _row: NSActionRowBuilder.IComponent[] = _types.map( (_type, _index) => ({
     id: _type,
     label: _options[_type],
     style: _index + 1
 }))
+
+const _drow: NSActionRowBuilder.IComponent[] = _row.map( _type => ({ ..._type, disabled: true }))
+
+const _auuid = pString.uuid();
+const _duuid = pString.uuid();
 
 class Dice {
     protected _isRunning: boolean = false;
@@ -32,6 +39,11 @@ class Dice {
     }
 
     start(_duration: number, _interation: CommandInteraction) {
+        this._data[_interation.user.id] = {
+            option: null,
+            interaction: _interation,
+        }
+
         if(this._isRunning) return;
         this._isRunning = true;
 
@@ -48,24 +60,25 @@ class Dice {
                 const _value = Number(interaction.options.get('value')?.value);
 
                 if(!option) {
-                    await interaction.reply({ content: `Bạn không cược gì nên được hoàn ${_value} coins`, flags: 'Ephemeral' });
+                    await interaction.followUp({ content: `Bạn không cược gì nên được hoàn ${_value} coins`, flags: 'Ephemeral' });
                 } else {
-                    const _p: InteractionReplyOptions = option === _rs ? { content: `${_view} về, bú x${_rate} = ${_value * _rate} coins`, flags: 'Ephemeral' } : { content: `Kết quả: ${_view}, cút luôn ${_value * _rate} coins`, flags: 'Ephemeral' }
-                    await interaction.reply(_p);
+                    const _p: InteractionReplyOptions = option === _rs ? { content: `${_view} về, bú x${_rate} = ${_value * _rate} coins`, flags: 'Ephemeral' } : { content: `Kết quả: ${_view}, cút luôn ${_value} coins`, flags: 'Ephemeral' }
+                    await interaction.followUp(_p);
                 }
             }
 
-            _interation.followUp( { content: `Kết quả ${_view}, Bú ${_rate}`, components: [] } )
+            const drow = NSActionRowBuilder.button(_drow, _duuid);
+            _interation.editReply( { content: `Kết quả ${_view}, Bú x${_rate}`, components: [drow] } )
             this._reset();
         }, _duration * 1000);
 
-        const row = NSActionRowBuilder.button(_row)
+        const row = NSActionRowBuilder.button(_row, _auuid);
 
-        _interation.reply( { content: "Cược", components: [row] } )
+        _interation.reply( { content: "Cược", components: [row], options: { withResponse: true } } )
     }
 
     protected _core!: ButtonInteraction;
-    handler(interaction: ButtonInteraction) {
+    async handler(interaction: ButtonInteraction) {
         if(!this._isRunning) {
             interaction.reply({ content: '⏳ Đang không có game nào chạy.', flags: 'Ephemeral' });
             return;
@@ -74,12 +87,18 @@ class Dice {
         const { customId } = interaction;
         const _target = this._data[interaction.user.id];
 
-        if(_target) {
-            _target.option = customId as TType;
+        if(!_target) { interaction.reply({ content: `Bro phải dùng '/dice {Số tiền}'để tham gia nhé.`, flags: 'Ephemeral' }); return; }
 
-            interaction.reply({ content: `Đâm vào ${_options[_target.option]}`, flags: 'Ephemeral' });
+        _target.option = customId as TType;
+        const _value = ( _target.interaction as unknown as CommandInteraction).options;
+        const _coin = Number(_value.get('value')?.value);
+
+        if(_target.message) {
+            _target.message.edit( { content: `Chuyển sang đâm ${_coin} coins vào ${_options[customId]}` } )
+            interaction.deferUpdate();
+        } else {
+            _target.message = await interaction.reply({ content: `Đâm vào ${_coin} coins vào ${_options[customId]}`, flags: 'Ephemeral' });
         }
-
     }
 
 }

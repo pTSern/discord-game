@@ -1,14 +1,13 @@
 import { ButtonInteraction, Client, CommandInteraction, Events, GatewayIntentBits, REST, Routes } from 'discord.js'
 import * as ENV from 'dotenv'
-import { dice } from './commands/dice';
 import { TCommand } from './config/Constant';
 import { NSCommands } from './core/Commands';
 import { pDice } from './games/Dice';
+import mongoose from 'mongoose';
 
 ENV.config();
 
 export const client = new Client( { intents: [ GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.DirectMessages ] } )
-client.login(process.env.DISCORD_TOKEN!);
 
 client.once(Events.ClientReady, async () => {
     console.log(`🟢 Logged in as ${client.user?.tag}`);
@@ -27,8 +26,6 @@ client.once(Events.ClientReady, async () => {
 })
 
 client.on(Events.InteractionCreate, async _interaction => {
-    console.log("🔔 Interaction received:", _interaction.toJSON());
-
     _interaction.isCommand() && await onCommand(_interaction);
     _interaction.isButton() && await onButton(_interaction);
 });
@@ -39,29 +36,20 @@ async function onCommand(_interaction: CommandInteraction) {
     _selector = _interaction.commandName;
     switch(_interaction.commandName as TCommand) {
         case 'dice': {
-            dice(_interaction);
+            pDice.start(10, _interaction);
             break;
         }
         case 'test': {
-            pDice.start(5, _interaction);
-
-            //const { test } = NSRows.buttons;
-
-            //await _interaction.reply({ content: 'Choose one:', components: [test] });
             break;
         }
     }
 }
 
 async function onButton(_interaction: ButtonInteraction) {
-    if(_selector === "test") {
+    if(_selector === "dice") {
         pDice.handler(_interaction);
         return
     }
-
-    const _chosen = _interaction.customId.split("_")[0];
-    console.log("🔔 Button interaction received:", _interaction.customId);
-    await _interaction.reply({ content: `You chose: ${_chosen}`, flags: 'Ephemeral' });
 }
 
 //mongoose.connect(process.env.MONGO_URI!).then( () => {

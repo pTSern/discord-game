@@ -10,11 +10,6 @@ export namespace NSCommands {
                 name: "value",
                 description: "The value",
                 required: true
-            },
-            {
-                name: "amount",
-                description: "The amount",
-                required: true
             }
         ]
     })

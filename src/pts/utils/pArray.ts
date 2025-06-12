@@ -1,16 +1,16 @@
-
+import { NSFlex } from "flex";
 
 type _TFinder<TType> = (curr: TType, prev: TType, value: TType) => boolean;
 const _hSmallerFinder: _TFinder<number> = (curr, prev, value) => (curr <= value && curr > prev)
 
-class _ArrayUtils {
-    flatter<T>(target: NSFlex.TFlexData<T>, ...targets: T[]): T[] {
+export namespace pArray {
+    export function flatter<T>(target: NSFlex.TArray<T>, ...targets: T[]): T[] {
         if(target === undefined && targets.length <= 0) return[]
         //@ts-ignore
         return [target, ...targets].flat();
     }
 
-    findSmallerNearest<T>(list: T[], prop: NSFlex.TKeyOf<T, number>, value: number, mechanic: _TFinder<number> = _hSmallerFinder) {
+    export function findSmallerNearest<T>(list: T[], prop: NSFlex.TKeyOf<T, number>, value: number, mechanic: _TFinder<number> = _hSmallerFinder) {
         return list.reduce((prev, curr) => {
             if(curr[prop] === undefined || typeof curr[prop] === 'number') {
                 const _curr = curr[prop] as number;
@@ -21,7 +21,7 @@ class _ArrayUtils {
         }, undefined as T | undefined)
     }
 
-    shuffle<TType>(array: TType[]) {
+    export function shuffle<TType>(array: TType[]) {
         for(let i = array.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [array[i], array[j]] = [array[j], array[i]];
@@ -29,7 +29,7 @@ class _ArrayUtils {
         return array;
     }
 
-    extractEqually(arr: number[], data: number[][] = []): any {
+    export function extractEqually(arr: number[], data: number[][] = []): any {
         if(arr.every(a => a <= 0)) return data;
 
         const _min = this.min(arr, 0);
@@ -40,11 +40,9 @@ class _ArrayUtils {
         return this.extractEqually(_root, data);
     }
 
-    min(arr: number[], above: number = 0) {
+    export function min(arr: number[], above: number = 0) {
         arr = arr.filter( e => e > above );
         return Math.min(...arr);
     }
 }
-
-export const pArrayUtils = new _ArrayUtils();
 
