@@ -1,5 +1,5 @@
 import { SlashCommandBuilder, SlashCommandIntegerOption } from "discord.js";
-import { TCommand } from "../config/Constant";
+import { NSCommand } from "../config/Constant";
 
 export namespace NSlashCommand {
 
@@ -10,7 +10,7 @@ export namespace NSlashCommand {
     }
 
     export interface ICommand {
-        name: TCommand;
+        name: NSCommand.TCommand;
         description?: string;
         options?: IOption[]
     }

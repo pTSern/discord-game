@@ -5,7 +5,7 @@ import { pNumber } from "./pNumber";
 
 export namespace pString {
 
-    interface _IStringReplacer {
+    export interface IReplacer {
         find: string;
         replacer: string;
         time?: number;
@@ -73,7 +73,7 @@ export namespace pString {
         }
     }
 
-    export function replace(root: string, replace: NSFlex.TArray<_IStringReplacer>, ...replaces: _IStringReplacer[]): string {
+    export function replace(root: string, replace: NSFlex.TArray<IReplacer>, ...replaces: IReplacer[]): string {
         replaces = pArray.flatter(replace, ...replaces);
 
         return replaces.reduce( (result, { find, replacer, time }) => {

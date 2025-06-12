@@ -5,13 +5,28 @@ export namespace pMath  {
     type TNumberUnit = 'INTEGER' | 'FLOAT'
     interface _TRange { min: number, max: number };
 
-    export function random(min: number, max: number, type: TNumberUnit = "INTEGER") {
+    namespace _random {
+        let _seed: number = Date.now();
+
+        export function random(): number {
+            const a = 1664525;
+            const c = 1013904223;
+            const m = 2 ** 32;
+
+            _seed = (a * this._seed + c) % m;
+
+            return this._seed / m;
+        }
+    }
+
+    export function random(min: number, max: number, type: TNumberUnit = "INTEGER", custom: boolean = false) {
+        const _rand = custom ? _random.random() : Math.random();
         switch(type) {
             case "INTEGER": {
-                return ( Math.random() * ( max - min + 1 ) >> 0 ) + min;
+                return ( _rand * ( max - min + 1 ) >> 0 ) + min;
             }
             case "FLOAT": {
-                return Math.random() * (max - min) + min;
+                return _rand * (max - min) + min;
             }
         }
     }

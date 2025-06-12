@@ -1,3 +1,4 @@
-
-const _commands = ['dice', 'test'] as const;
-export type TCommand = typeof _commands[number];
+export namespace NSCommand {
+    export const commands = ['dice', 'test', 'menu', 'setting'] as const;
+    export type TCommand = typeof commands[number];
+}

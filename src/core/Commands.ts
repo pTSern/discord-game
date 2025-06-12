@@ -4,11 +4,11 @@ export namespace NSCommands {
 
     const slash = NSlashCommand.generator( {
         name: "dice",
-        description: "Roll a dice from 1 to 6",
+        description: "Cược { value } vào game Tài Xỉu.",
         options: [
             {
                 name: "value",
-                description: "The value",
+                description: "Số lượng",
                 required: true
             }
         ]
@@ -16,15 +16,25 @@ export namespace NSCommands {
 
     const test = NSlashCommand.generator( {
         name: 'test',
-        description: 'Test command',
+        description: 'Nạp { value } vào tài khoản',
         options: [
             {
-                name: 'xx',
-                description: "he",
-                required: false 
+                name: 'value',
+                description: "Số tiền",
+                required: true
             }
         ]
     })
 
-    export const commands = [ slash, test ];
+    const menu = NSlashCommand.generator( {
+        name: 'menu',
+        description: "Tạo Menu",
+    } )
+
+    const setting = NSlashCommand.generator( {
+        name: "setting",
+        description: 'Thay đổi cài đặt',
+    })
+
+    export const commands = [ slash, test, menu, setting ];
 }
