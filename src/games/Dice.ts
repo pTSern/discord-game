@@ -1,14 +1,24 @@
-import { ButtonInteraction, CommandInteraction, InteractionResponse, TextInputStyle } from "discord.js";
+import { ButtonInteraction, CommandInteraction, InteractionResponse } from "discord.js";
 import { pMath } from "../pts/utils";
 import { DBUser } from "../database/models/User";
 import { CFDice } from "../config/Dice";
 import { NSLanguage } from "../config/Language";
 import { NSActionRowBuilder } from "../helper/ActionRowBuilder";
+import { NSDiceIcon } from "../config/Icon/Dice";
 
 interface _IData {
     option: CFDice.TType;
     interaction: CommandInteraction;
     message?: InteractionResponse;
+}
+
+interface _IResult {
+    type: CFDice.TType;
+    rate: number;
+    first: number;
+    second: number;
+    third: number;
+    total: number;
 }
 
 class _Dice {
@@ -20,19 +30,21 @@ class _Dice {
         this._data = {}
     }
 
-    protected _logic(): { type: CFDice.TType, rate: number, first: number, second: number, third: number } {
+    protected _logic(): _IResult {
         const first = pMath.random(1, 6, "INTEGER", false);
         const second = Date.now() % 6 + 1;
         const third = pMath.random(1, 6, "INTEGER", true);
 
-        if(first == second && second == third) return { type: 'storm', rate: 15, first, second, third };
-        else return ( first + second + third ) % 2 === 0 ? { type: 'even', rate: 2, first, second, third } : { type: 'odd', rate: 2, first, second, third };
+        const total = first + second + third;
+        if(first == second && second == third) return { type: 'storm', rate: 15, first, second, third, total };
+        else return total % 2 === 0 ? { type: 'even', rate: 2, first, second, third, total } : { type: 'odd', rate: 2, first, second, third, total };
     }
 
     protected _handler(_duration: number, _interaction: CommandInteraction) {
         setTimeout(async () => {
-            const { type, rate, first, second, third } = this._logic();
+            const { type, rate, total, first, second, third } = this._logic();
             const _view = NSLanguage.get(type, _interaction.locale);
+            const _result = `${total} - ${_view}`
             const _list = Object.values(this._data);
 
             const messages = await Promise.all(_list.map(async ({ option, interaction }) => {
@@ -61,7 +73,7 @@ class _Dice {
                         content: NSLanguage.get( {
                             key: 'dyn_dice_win',
                             replacer: [
-                                { find: "@view", replacer: _view },
+                                { find: "@view", replacer: _result },
                                 { find: "@rate", replacer: `${rate}` },
                                 { find: "@amount", replacer: `${_value_ * rate}` },
                                 { find: "@wallet", replacer: `${_user_.coins}` },
@@ -75,7 +87,7 @@ class _Dice {
                         content: NSLanguage.get( {
                             key: 'dyn_dice_lose',
                             replacer: [
-                                { find: "@view", replacer: _view },
+                                { find: "@view", replacer: _result },
                                 { find: "@bet", replacer: `${_value_}` },
                                 { find: "@wallet", replacer: `${_user_.coins}` },
                                 { find: "@coin", replacer: _coin }] 
@@ -92,11 +104,11 @@ class _Dice {
                 content: NSLanguage.get( {
                     key: 'dyn_dice_result',
                     replacer: [
-                        { find: "@view", replacer: _view },
+                        { find: "@view", replacer: _result },
                         { find: "@rate", replacer: `${rate}` },
-                        { find: "@first", replacer: `${first}` },
-                        { find: "@second", replacer: `${second}` },
-                        { find: "@third", replacer: `${third}` },
+                        { find: "@first", replacer: `||${NSDiceIcon.get(first)}||` },
+                        { find: "@second", replacer: `||${NSDiceIcon.get(second)}||` },
+                        { find: "@third", replacer: `||${NSDiceIcon.get(third)}||` },
                         { find: "@msg", replacer: `${_msg}` }
                     ]
                 }, _interaction.locale),
@@ -129,8 +141,7 @@ class _Dice {
             } )
             return;
         }
-
-        console.log(`${user.displayName} đã cược ${_value} coins vào game Dice.`);
+        console.log(`${user.displayName} Betted ${_value} coins in Dice.`);
 
         this._data[id] = {
             option: null,
@@ -166,16 +177,8 @@ class _Dice {
                 color: 0x00FF00,
                 image: { url: "https://www.google.com/imgres?q=image&imgurl=https%3A%2F%2Fimages.unsplash.com%2Fphoto-1575936123452-b67c3203c357%3Ffm%3Djpg%26q%3D60%26w%3D3000%26ixlib%3Drb-4.1.0%26ixid%3DM3wxMjA3fDB8MHxzZWFyY2h8Mnx8aW1hZ2V8ZW58MHx8MHx8fDA%253D&imgrefurl=https%3A%2F%2Funsplash.com%2Fs%2Fphotos%2Fimage&docid=ExDvm63D_wCvSM&tbnid=-mNI5DBCB_iEPM&vet=12ahUKEwim6Nn35OyNAxXUavUHHduSF-UQM3oECBsQAA..i&w=3000&h=2000&hcb=2&ved=2ahUKEwim6Nn35OyNAxXUavUHHduSF-UQM3oECBsQAA",  }
             }],
-            //content: NSLanguage.get( {
-            //    key: 'dyn_dice_start_new_game',
-            //    replacer: [
-            //        { find: "@bet", replacer: `${_value}` },
-            //        { find: "@coin", replacer: _coin },
-            //    ]
-            //}, _interaction.locale),
             flags: "Ephemeral",
         } )
-        //this._one(_interaction);
     }
 
     async handler(_interaction: ButtonInteraction) {
@@ -228,7 +231,7 @@ class _Dice {
                     replacer: [
                         { find: "@bet", replacer: `${_coin}` },
                         { find: "@view", replacer: _view },
-                        { find: "@coin", replacer: _coin }
+                        { find: "@coin", replacer: `${_coin}` }
                     ]
                 }, _interaction.locale),
             } )
@@ -240,7 +243,7 @@ class _Dice {
                     replacer: [
                         { find: "@bet", replacer: `${_coin}` },
                         { find: "@view", replacer: _view },
-                        { find: "@coin", replacer: _coin }
+                        { find: "@coin", replacer: `${_coin}` }
                     ]
                 }, _interaction.locale),
                 flags: 'Ephemeral' 

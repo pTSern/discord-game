@@ -108,7 +108,7 @@ export namespace NSLanguage {
         | { key: TKey; handler?: TModifier; raw?: never, replacer?: pString.IReplacer[] }
         | { raw: string; handler?: TModifier; key?: never, replacer?: pString.IReplacer[] }
 
-    export function get(_key: TOption, _zone: Locale = Locale.Vietnamese) {
+    export function get(_key: TOption, _zone: Locale = Locale.Vietnamese): string {
         switch(typeof _key) {
             case 'undefined': {
                 return get({ raw: 'undefined' }, _zone);

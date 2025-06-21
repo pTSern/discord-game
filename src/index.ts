@@ -3,8 +3,9 @@ import * as ENV from 'dotenv'
 import { NSCommands } from './core/Commands';
 import './core/Core'
 
-import mongoose from 'mongoose';
+//import mongoose from 'mongoose';
 import { pEventManager } from './pts/event/pEvent';
+import { SQCore } from './database/sqlite/Core';
 
 ENV.config();
 
@@ -27,10 +28,17 @@ client.once(Events.ClientReady, async () => {
     } catch ( _err ) {
         console.error("❌ Error while registering Slash CMD:", _err);
     }
-})
+});
 
-mongoose.connect(process.env.MONGO_URL).then( async () => {
+(async () => {
+    SQCore.prepare();
     pEventManager.invoke('onMongoReady')
     await client.login(process.env.DISCORD_TOKEN!);
     pEventManager.invoke('onClientLogin', client)
-} )
+})()
+
+//mongoose.connect(process.env.MONGO_URL).then( async () => {
+//    pEventManager.invoke('onMongoReady')
+//    await client.login(process.env.DISCORD_TOKEN!);
+//    pEventManager.invoke('onClientLogin', client)
+//} )
